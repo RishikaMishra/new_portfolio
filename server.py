@@ -185,14 +185,30 @@ def ask_ai(question: str, profile_data: dict) -> str:
 
 class PortfolioHandler(http.server.SimpleHTTPRequestHandler):
     def end_headers(self):
-        self.send_header("Access-Control-Allow-Origin", "*")
+        origin = self.headers.get("Origin") if hasattr(self, "headers") and self.headers else None
+        # Allow requests from GitHub Pages (*.github.io) and any client origin
+        if origin:
+            self.send_header("Access-Control-Allow-Origin", origin)
+            self.send_header("Vary", "Origin")
+        else:
+            self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS, HEAD")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
+        self.send_header("Access-Control-Max-Age", "86400")
         super().end_headers()
 
     def do_OPTIONS(self):
         self.send_response(204)
         self.end_headers()
+
+    def do_GET(self):
+        if self.path in ("/health", "/api/health"):
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            self.wfile.write(json.dumps({"status": "healthy", "service": "portfolio-backend"}).encode("utf-8"))
+            return
+        super().do_GET()
 
     def do_POST(self):
         if self.path == "/api/chat":
@@ -200,13 +216,14 @@ class PortfolioHandler(http.server.SimpleHTTPRequestHandler):
             body = self.rfile.read(content_length).decode("utf-8")
             try:
                 data = json.loads(body) if body else {}
-                question = data.get("question", "").strip()
+                # Accept both 'message' and 'question'
+                question = (data.get("message") or data.get("question") or "").strip()
                 profile_data = data.get("data", {})
                 if not question:
                     self.send_response(400)
                     self.send_header("Content-Type", "application/json")
                     self.end_headers()
-                    self.wfile.write(json.dumps({"error": "Question is required"}).encode("utf-8"))
+                    self.wfile.write(json.dumps({"error": "Message or question is required"}).encode("utf-8"))
                     return
 
                 answer = ask_ai(question, profile_data)
@@ -214,7 +231,8 @@ class PortfolioHandler(http.server.SimpleHTTPRequestHandler):
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json")
                 self.end_headers()
-                self.wfile.write(json.dumps({"success": True, "answer": answer}).encode("utf-8"))
+                # Return both answer and message fields for compatibility
+                self.wfile.write(json.dumps({"success": True, "answer": answer, "message": answer}).encode("utf-8"))
             except Exception as e:
                 self.send_response(500)
                 self.send_header("Content-Type", "application/json")

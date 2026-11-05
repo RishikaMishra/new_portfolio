@@ -183,9 +183,14 @@ document.body.appendChild(d);const m=$('#am');let busy=false;
 const add=(t,c)=>{const x=document.createElement('div');x.className='b '+c;x.textContent=t;m.appendChild(x);m.scrollTop=m.scrollHeight;return x};
 async function go(q){q=q.trim();if(!q||busy)return;busy=true;add(q,'u');const r=add('Thinking...','a');
 try{
-  const res=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question:q,data:D})});
+  const API_URL="https://new-portfolio-zuil.onrender.com";
+  const res=await fetch(`${API_URL}/api/chat`,{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({message:q,question:q,data:D})
+  });
   const d=await res.json().catch(()=>({}));
-  if(res.ok&&d.answer){r.textContent=d.answer;m.scrollTop=m.scrollHeight;busy=false;return;}
+  if(res.ok&&(d.answer||d.message)){r.textContent=d.answer||d.message;m.scrollTop=m.scrollHeight;busy=false;return;}
   if(d.error)throw new Error(d.error);
   throw new Error('Server returned '+res.status);
 }catch(e){
@@ -198,7 +203,7 @@ try{
       }
     }catch(x){}
   }
-  r.textContent='The AI assistant is unavailable right now. (Please make sure python3 server.py is running). You can email Rishika at '+D.email+'.';
+  r.textContent='The AI assistant is unavailable right now (it may be waking up, please try again in a moment). You can email Rishika at '+D.email+'.';
 }busy=false}
 $('#aib').onclick=()=>$('#aip').classList.toggle('on');$('#aix').onclick=()=>$('#aip').classList.remove('on');
 $('#as').onclick=()=>{const i=$('#aq');go(i.value);i.value=''};$('#aq').onkeydown=ev=>{if(ev.key==='Enter')$('#as').click()};

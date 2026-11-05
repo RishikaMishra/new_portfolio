@@ -1890,13 +1890,18 @@
         q = q.trim(); if (!q || busy) return; busy = true; add(q, 'u'); const r = add('Thinking...', 'a');
         try {
           const res = await fetch('/api/chat', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ question: q, data: D })
-          });
-          const d = await res.json().catch(() => ({}));
-          if (res.ok && d.answer) {
-            r.textContent = d.answer;
+            const API_URL = "https://new-portfolio-zuil.onrender.com";
+            const res = await fetch(`${API_URL}/api/chat`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ question: q, data: D })
+            body: JSON.stringify({ message: q, question: q, data: D })
+            });
+            const d = await res.json().catch(() => ({}));
+            if(res.ok && d.answer) {
+              r.textContent = d.answer;
+          if (res.ok && (d.answer || d.message)) {
+            r.textContent = d.answer || d.message;
             m.scrollTop = m.scrollHeight;
             busy = false;
             return;
@@ -1915,6 +1920,7 @@
             } catch (x) { }
           }
           r.textContent = 'The AI assistant is unavailable right now. (Please make sure python3 server.py is running). You can email Rishika at ' + D.email + '.';
+          r.textContent = 'The AI assistant is unavailable right now (it may be waking up, please try again in a moment). You can email Rishika at ' + D.email + '.';
         }
         busy = false;
       }
