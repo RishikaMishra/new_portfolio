@@ -1,0 +1,9 @@
+{
+  "name": "rishika-portfolio",
+  "version": "1.0.0",
+  "description": "Rishika Mishra - Portfolio Website with AI Assistant",
+  "scripts": {
+    "start": "python3 server.py",
+    "dev": "python3 server.py"
+  }
+}
