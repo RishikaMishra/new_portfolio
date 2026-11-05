@@ -1,0 +1,10 @@
+# Rishika Mishra - Portfolio Website Server
+#
+# The backend server (server.py) is implemented using the Python 3 standard library
+# (http.server, urllib.request, json, os, socket, pathlib, sys).
+# No external third-party packages are strictly required to run the server.
+#
+# Optional dependencies (uncomment if you wish to use them):
+# python-dotenv>=1.0.0
+# requests>=2.31.0
+
