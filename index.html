@@ -1884,49 +1884,46 @@
     function aiInit() {
       const d = document.createElement('div'); d.id = 'ai';
       d.innerHTML = `<button id='aib'>✨ Ask AI</button><div id='aip'><div class='ah'><b>Ask about Rishika</b><button id='aix'>×</button></div><div id='am'><div class='b a'>Hi! I am an AI assistant. Ask me about Rishika's experience, projects or skills.</div></div><div class='ch'>${['30-second summary', 'Why hire her?', 'Tech stack', 'Best project', 'How to contact her'].map(t => '<button>' + t + '</button>').join('')}</div><div class='af'><input id='aq' placeholder='Ask anything...'><button id='as'>Send</button></div></div>`;
-      document.body.appendChild(d); const m = $('#am'); let busy = false;
+      document.body.appendChild(d);       const m = $('#am'); let busy = false;
       const add = (t, c) => { const x = document.createElement('div'); x.className = 'b ' + c; x.textContent = t; m.appendChild(x); m.scrollTop = m.scrollHeight; return x };
       async function go(q) {
-        q = q.trim(); if (!q || busy) return; busy = true; add(q, 'u'); const r = add('Thinking...', 'a');
-        try {
-          const res = await fetch('/api/chat', {
-            const API_URL = "https://new-portfolio-zuil.onrender.com";
-            const res = await fetch(`${API_URL}/api/chat`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ question: q, data: D })
-            body: JSON.stringify({ message: q, question: q, data: D })
-            });
-            const d = await res.json().catch(() => ({}));
-            if(res.ok && d.answer) {
-              r.textContent = d.answer;
-          if (res.ok && (d.answer || d.message)) {
-            r.textContent = d.answer || d.message;
-            m.scrollTop = m.scrollHeight;
-            busy = false;
-            return;
-          }
-          if (d.error) throw new Error(d.error);
-          throw new Error('Server returned ' + res.status);
-        } catch (e) {
-          if (typeof claude !== 'undefined' && claude.use) {
-            try {
-              const s = await claude.use('sample');
-              if (s) {
-                await s('You are the assistant on the portfolio website of Rishika Mishra. Answer visitors in 2-4 short sentences, in third person, using ONLY this profile data: ' + JSON.stringify(D, (k, v) => k === 'img' ? undefined : v) + '\nIf the answer is not in the data, say so and suggest emailing her. Visitor question: ' + q, { onText: o => { r.textContent = o.text; m.scrollTop = m.scrollHeight } });
-                busy = false;
-                return;
-              }
-            } catch (x) { }
-          }
-          r.textContent = 'The AI assistant is unavailable right now. (Please make sure python3 server.py is running). You can email Rishika at ' + D.email + '.';
-          r.textContent = 'The AI assistant is unavailable right now (it may be waking up, please try again in a moment). You can email Rishika at ' + D.email + '.';
+      q = q.trim(); if (!q || busy) return; busy = true; add(q, 'u'); const r = add('Thinking...', 'a');
+      try {
+        const apiUrl = location.hostname === 'localhost' || location.hostname === '127.0.0.1'
+          ? ''
+          : 'https://new-portfolio-zuil.onrender.com';
+        const res = await fetch(`${apiUrl}/api/chat`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: q, question: q, data: D })
+        });
+        const d = await res.json().catch(() => ({}));
+        if (res.ok && (d.answer || d.message)) {
+          r.textContent = d.answer || d.message;
+          m.scrollTop = m.scrollHeight;
+          busy = false;
+          return;
         }
-        busy = false;
+        if (d.error) throw new Error(d.error);
+        throw new Error('Server returned ' + res.status);
+      } catch (e) {
+        if (typeof claude !== 'undefined' && claude.use) {
+          try {
+            const s = await claude.use('sample');
+            if (s) {
+              await s('You are the assistant on the portfolio website of Rishika Mishra. Answer visitors in 2-4 short sentences, in third person, using ONLY this profile data: ' + JSON.stringify(D, (k, v) => k === 'img' ? undefined : v) + '\nIf the answer is not in the data, say so and suggest emailing her. Visitor question: ' + q, { onText: o => { r.textContent = o.text; m.scrollTop = m.scrollHeight } });
+              busy = false;
+              return;
+            }
+          } catch (x) { }
+        }
+        r.textContent = 'The AI assistant is unavailable right now (it may be waking up, please try again in a moment). You can email Rishika at ' + D.email + '.';
       }
-      $('#aib').onclick = () => $('#aip').classList.toggle('on'); $('#aix').onclick = () => $('#aip').classList.remove('on');
-      $('#as').onclick = () => { const i = $('#aq'); go(i.value); i.value = '' }; $('#aq').onkeydown = ev => { if (ev.key === 'Enter') $('#as').click() };
-      d.querySelectorAll('.ch button').forEach(b => b.onclick = () => go(b.textContent))
+      busy = false;
+    }
+    $('#aib').onclick = () => $('#aip').classList.toggle('on'); $('#aix').onclick = () => $('#aip').classList.remove('on');
+    $('#as').onclick = () => { const i = $('#aq'); go(i.value); i.value = '' }; $('#aq').onkeydown = ev => { if (ev.key === 'Enter') $('#as').click() };
+    d.querySelectorAll('.ch button').forEach(b => b.onclick = () => go(b.textContent))
     }
     async function save() {
       const m = $('#msg') || $('#pbm') || {}; if (!isAuthorizedAdmin()) { m.textContent = 'Only ' + ADMIN_EMAIL + ' can publish.'; return }
